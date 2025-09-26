@@ -20,6 +20,11 @@ const teamMembers = [
     role: 'AI Lab Lead',
     imageUrl: 'https://i.postimg.cc/s29WfvJW/Whats-App-Image-2025-09-12-at-19-21-04.jpg',
   },
+  {
+    name: 'Eng Muna Abu Abdoun',
+    role: 'Chief IT Officer (CIO)',
+    imageUrl: 'https://i.postimg.cc/9XRvyw0d/Whats-App-Image-2025-09-27-at-00-06-54.jpg',
+  },
 ];
 
 export default function AboutPage() {
