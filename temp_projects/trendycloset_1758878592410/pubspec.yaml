@@ -1,0 +1,41 @@
+name: trendy_closet
+description: "TrendyCloset is your all-in-one fashion shopping app, designed to bring the latest clothing trends right to your fingertips. From browsing collections to completing secure purchases, TrendyCloset makes shopping fun, easy, and interactive."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  go_router: ^14.0.0
+  provider: ^6.0.5
+  shared_preferences: ^2.2.3
+  flutter_animate: ^4.5.0
+  
+  # Firebase Core
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.1.0
+  cloud_firestore: ^5.0.0
+  firebase_storage: ^12.1.0
+  firebase_analytics: ^12.0.0
+
+  # Supabase
+  supabase_flutter: ^2.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    # Add the custom app icon here. Note: This file reference assumes the file is placed by the user.
+    # The actual image content is not generated here.
+    # - assets/icons/whatsapp_image_2025-09-25_at_11.56.34_pm.jpeg
