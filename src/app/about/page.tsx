@@ -11,11 +11,6 @@ const teamMembers = [
     imageUrl: 'https://i.postimg.cc/cC5wq2B5/Whats-App-Image-2025-03-15-at-12-06-31-AM.jpg',
   },
   {
-    name: 'Eng Mohammad.AL-Rawashdah',
-    role: 'CTO',
-    imageUrl: 'https://i.postimg.cc/mrGMGQ7R/Whats-App-Image-2025-09-12-at-19-03-04.jpg',
-  },
-  {
     name: 'Eng Rabie Otoum',
     role: 'AI Lab Lead',
     imageUrl: 'https://i.postimg.cc/s29WfvJW/Whats-App-Image-2025-09-12-at-19-21-04.jpg',
@@ -24,6 +19,11 @@ const teamMembers = [
     name: 'Eng Muna Abu Abdoun',
     role: 'Chief IT Officer (CIO)',
     imageUrl: 'https://i.postimg.cc/9XRvyw0d/Whats-App-Image-2025-09-27-at-00-06-54.jpg',
+  },
+  {
+    name: 'Eng Mohammad.AL-Rawashdah',
+    role: 'CTO',
+    imageUrl: 'https://i.postimg.cc/mrGMGQ7R/Whats-App-Image-2025-09-12-at-19-03-04.jpg',
   },
 ];
 
