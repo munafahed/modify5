@@ -32,11 +32,23 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FlutterPreviewFrame, type AppConfig } from "@/components/flutter-preview-frame";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FlutterPreviewFrame, type AppConfig as BaseAppConfig } from "@/components/flutter-preview-frame";
 
 interface CustomPage {
   name: string;
   description: string;
+  code?: string;
+  pubspecYaml?: string;
+  widgetStructure?: string;
+  isGenerating?: boolean;
+  screenFilePath?: string;
+  className?: string;
+  routeName?: string;
+}
+
+interface AppConfig extends Omit<BaseAppConfig, 'customPages'> {
+  customPages: CustomPage[];
 }
 
 interface GeneratedProject {
@@ -89,6 +101,9 @@ export default function EnhancedDashboard() {
   const [generatedResult, setGeneratedResult] = useState<GeneratedProject | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [buildResult, setBuildResult] = useState<{success: boolean, projectId: string, previewUrl: string, message: string} | null>(null);
+  const [showPageDialog, setShowPageDialog] = useState(false);
+  const [pageForm, setPageForm] = useState({ name: '', description: '' });
+  const [isGeneratingPage, setIsGeneratingPage] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,13 +143,85 @@ export default function EnhancedDashboard() {
   };
 
   const handleCustomPageAdd = () => {
-    const pageName = prompt('Enter page name:');
-    const pageDescription = prompt('Describe this page:');
-    if (pageName && pageDescription) {
+    setPageForm({ name: '', description: '' });
+    setShowPageDialog(true);
+  };
+
+  const generateCustomPageWithAI = async () => {
+    if (!pageForm.name.trim() || !pageForm.description.trim()) {
+      setError('Please provide both page name and description');
+      return;
+    }
+
+    setIsGeneratingPage(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/generate-page', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: pageForm.name,
+          description: pageForm.description,
+          projectContext: `${appConfig.appName}: ${appConfig.description}`,
+          generateForScreensFolder: true
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to generate page');
+      }
+
+      const screenFileName = pageForm.name.toLowerCase().replace(/\s+/g, '_') + '_screen.dart';
+      const className = pageForm.name.replace(/\s+/g, '') + 'Screen';
+      const routeName = '/' + pageForm.name.toLowerCase().replace(/\s+/g, '_');
+
+      const newPage: CustomPage = {
+        name: pageForm.name,
+        description: pageForm.description,
+        code: result.code,
+        pubspecYaml: result.pubspecYaml,
+        widgetStructure: result.widgetStructure,
+        screenFilePath: `lib/screens/${screenFileName}`,
+        className: className,
+        routeName: routeName
+      };
+
       setAppConfig(prev => ({
         ...prev,
-        customPages: [...prev.customPages, { name: pageName, description: pageDescription }]
+        customPages: [...prev.customPages, newPage]
       }));
+
+      setShowPageDialog(false);
+      setPageForm({ name: '', description: '' });
+      
+    } catch (error) {
+      console.error('Page generation failed:', error);
+      setError(`AI Generation Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Add basic page as fallback
+      const fallbackPage: CustomPage = {
+        name: pageForm.name,
+        description: pageForm.description,
+        code: `// AI generation failed, but page structure created\n// ${pageForm.description}`,
+        screenFilePath: `lib/screens/${pageForm.name.toLowerCase().replace(/\s+/g, '_')}_screen.dart`,
+        className: pageForm.name.replace(/\s+/g, '') + 'Screen',
+        routeName: '/' + pageForm.name.toLowerCase().replace(/\s+/g, '_')
+      };
+
+      setAppConfig(prev => ({
+        ...prev,
+        customPages: [...prev.customPages, fallbackPage]
+      }));
+
+      setShowPageDialog(false);
+      setPageForm({ name: '', description: '' });
+    } finally {
+      setIsGeneratingPage(false);
     }
   };
 
@@ -183,7 +270,21 @@ ${features.offlineMode ? '- Offline mode capability with local storage' : ''}
 ${appConfig.pages.map(page => `- ${page} page (create fully functional page with proper navigation and interactive elements)`).join('\n')}
 
 **Custom Pages to Generate:**
-${appConfig.customPages.map(page => `- ${page.name} page: ${page.description} (implement this page according to the description with proper UI and functionality)`).join('\n')}
+${appConfig.customPages.map(page => {
+  if (page.code) {
+    return `- ${page.name} page: Use this pre-generated Flutter code exactly as provided:
+      File Path: ${page.screenFilePath || `lib/screens/${page.name.toLowerCase().replace(/\s+/g, '_')}_screen.dart`}
+      Class Name: ${page.className || page.name.replace(/\s+/g, '') + 'Screen'}
+      Route Name: ${page.routeName || '/' + page.name.toLowerCase().replace(/\s+/g, '_')}
+      
+      CODE:
+      ${page.code}
+      
+      ${page.pubspecYaml ? `ADDITIONAL DEPENDENCIES FOR PUBSPEC.YAML:\n${page.pubspecYaml}` : ''}`;
+  } else {
+    return `- ${page.name} page: ${page.description} (implement this page according to the description with proper UI and functionality)`;
+  }
+}).join('\n\n')}
 
 **Technical Requirements:**
 - Complete Flutter project structure with lib/main.dart
@@ -197,6 +298,8 @@ ${appConfig.customPages.map(page => `- ${page.name} page: ${page.description} (i
 - Proper folder structure (screens/, widgets/, models/, services/, etc.)
 - State management for theme switching (light/dark modes)
 - Interactive elements that work properly (buttons, forms, navigation)
+
+**CRITICAL: Use Pre-Generated Code:** For custom pages that include pre-generated Flutter code, use the provided code EXACTLY as specified. Create the files at the exact paths mentioned, use the specified class names, and integrate the routes properly. Do not regenerate or modify the pre-generated code - it's already optimized with Material 3 design, animations, and proper functionality.
 
 **Important:** Generate separate Dart files for each screen/page with proper navigation between them. Each screen should be fully functional with the specified color scheme and modern Material 3 design.
 
@@ -762,6 +865,97 @@ Please generate a complete, production-ready Flutter application that matches th
           {currentStep === 'complete' && renderCompleteStep()}
         </div>
       </div>
+
+      {/* AI Page Generation Dialog */}
+      <Dialog open={showPageDialog} onOpenChange={setShowPageDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              🚀 Create AI-Powered Flutter Page
+            </DialogTitle>
+            <DialogDescription>
+              Describe your page and AI will generate a complete Flutter widget with Material 3 design, animations, and proper functionality - just like Login, Signup, and Notifications templates.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="page-name" className="text-sm font-medium">
+                Page Name
+              </label>
+              <Input
+                id="page-name"
+                placeholder="e.g., Profile Settings, Shopping Cart, Messages"
+                value={pageForm.name}
+                onChange={(e) => setPageForm(prev => ({ ...prev, name: e.target.value }))}
+                disabled={isGeneratingPage}
+              />
+              {pageForm.name && (
+                <p className="text-xs text-muted-foreground">
+                  Will create: <code>{pageForm.name.toLowerCase().replace(/\s+/g, '_')}_screen.dart</code>
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="page-description" className="text-sm font-medium">
+                Page Description & UI Requirements
+              </label>
+              <Textarea
+                id="page-description"
+                placeholder="Example: 'A profile settings page with user avatar at top, name and email text fields, theme toggle switch, notification preferences section, logout button at bottom, and smooth animations. Use modern Material 3 cards and purple gradient colors.'"
+                rows={5}
+                value={pageForm.description}
+                onChange={(e) => setPageForm(prev => ({ ...prev, description: e.target.value }))}
+                disabled={isGeneratingPage}
+              />
+              <div className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 p-3 rounded-lg">
+                <div className="text-sm">💡 <strong>AI Tips:</strong></div>
+                <div className="text-xs mt-1 space-y-1">
+                  <div>• Specify UI components: buttons, forms, cards, lists</div>
+                  <div>• Mention colors, animations, and styling preferences</div>
+                  <div>• Describe layout: columns, rows, spacing</div>
+                  <div>• Include functionality: navigation, validation, interactions</div>
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPageDialog(false)}
+              disabled={isGeneratingPage}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={generateCustomPageWithAI}
+              disabled={isGeneratingPage || !pageForm.name.trim() || !pageForm.description.trim()}
+              className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+            >
+              {isGeneratingPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  🧠 AI Generating Flutter Page...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  ✨ Generate with AI
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
