@@ -2,6 +2,11 @@ export interface PageGenerationRequest {
   name: string;
   description: string;
   projectContext?: string;
+  themeColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
 }
 
 export interface PageGenerationResponse {
@@ -20,20 +25,33 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateFlutterPage(request: PageGenerationRequest): Promise<PageGenerationResponse> {
   try {
-    const prompt = `Generate a PROFESSIONAL, BEAUTIFUL Flutter page in Dart code that matches FlutterFlow's design quality. Create a modern, visually stunning, child-friendly interface with animations and Material 3 design.
+    const themeColors = request.themeColors || {
+      primary: '#5D3FD3',
+      secondary: '#6C63FF', 
+      accent: '#FF6B6B'
+    };
+
+    const prompt = `Generate a PROFESSIONAL, BEAUTIFUL Flutter page in Dart code that matches FlutterFlow's design quality. Create a modern, visually stunning interface with animations and Material 3 design.
 
 **Page Name:** ${request.name}
 **Description:** ${request.description}
 ${request.projectContext ? `**Project Context:** ${request.projectContext}` : ''}
 
+**THEME COLORS TO USE:**
+- Primary Color: ${themeColors.primary}
+- Secondary Color: ${themeColors.secondary}  
+- Accent Color: ${themeColors.accent}
+
 **STRICT DESIGN REQUIREMENTS (Follow FlutterFlow Standards):**
 
 🎨 **Visual Design:**
-- Use Material 3 design system with proper color schemes
-- Apply beautiful gradients, shadows, and rounded corners
-- Use playful, child-friendly colors (soft blues, purples, greens, pinks)
+- Use Material 3 design system with provided theme colors
+- Apply beautiful gradients using the theme colors above
+- Add rounded corners (BorderRadius.circular(12.0)) and soft shadows
+- Use ONLY the provided theme colors for consistent branding
 - Add proper elevation and depth with shadows
 - Ensure high contrast and accessibility
+- Use Theme.of(context).colorScheme for dynamic theming support
 
 🎭 **Animations & Interactions:**
 - Add smooth fade-in animations for page content
@@ -64,23 +82,37 @@ ${request.projectContext ? `**Project Context:** ${request.projectContext}` : ''
 - Clear, readable fonts (minimum 16sp)
 
 **CODE STRUCTURE REQUIREMENTS:**
-1. Complete, runnable Flutter app with main() function
-2. Use StatefulWidget for interactive elements
-3. Implement proper state management
-4. Include animation controllers where needed
-5. Add proper error handling and loading states
-6. Use const constructors for performance
-7. Follow Dart naming conventions exactly
+1. Generate complete Flutter app with main() function and MaterialApp
+2. Import 'package:flutter/material.dart'
+3. Use proper Dart naming: ClassNameScreen extends StatefulWidget  
+4. Implement State<ClassNameScreen> with SingleTickerProviderStateMixin for animations
+5. Add animation controllers in initState() and dispose them properly
+6. Include realistic sample data that matches the page description
+7. Use proper form validation with GlobalKey<FormState>
+8. Follow Material 3 design patterns with provided theme colors
+9. Add accessibility semantics for screen readers
+10. Use const constructors where possible for performance
 
 **SPECIFIC IMPLEMENTATION:**
-- Create a Scaffold with a beautiful AppBar (gradient background)
-- Add a main body with SafeArea
-- Use Container/Card widgets with decoration
-- Implement Column/ListView for content layout
-- Add FloatingActionButton with custom styling
-- Include at least 2-3 smooth animations
-- Use proper color themes throughout
-- Add shadows and elevations for depth
+- Create a Scaffold with AppBar using theme colors
+- Add main body with SafeArea and proper padding
+- Use Container/Card widgets with rounded decorations
+- Implement Column/ListView/GridView for content layout  
+- Add FloatingActionButton with theme colors
+- Include fade-in and slide animations using AnimationController
+- Use Theme.of(context).colorScheme.primary for primary color
+- Use Theme.of(context).colorScheme.secondary for secondary color
+- Add shadows (elevation: 4.0) and rounded corners
+- Include proper form validation for input fields
+- Add accessibility labels (semanticsLabel) for screen readers
+- Use realistic placeholder data that matches the page description
+
+**COLOR USAGE EXAMPLES:**
+- AppBar: backgroundColor: Theme.of(context).colorScheme.primary
+- Cards: color: Theme.of(context).colorScheme.primaryContainer  
+- Buttons: style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary)
+- Text: style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)
+- FloatingActionButton: backgroundColor: Theme.of(context).colorScheme.secondary
 
 **OUTPUT FORMAT:**
 Return a JSON object with exactly these fields:
@@ -119,7 +151,7 @@ Return a JSON object with exactly these fields:
       const pubspecMatch = rawText.match(/```yaml([\s\S]*?)```/) || rawText.match(/```([\s\S]*?)```/);
       
       parsedData = {
-        code: codeMatch ? codeMatch[1].trim() : generateFallbackCode(request.name, request.description),
+        code: codeMatch ? codeMatch[1].trim() : generateFallbackCode(request.name, request.description, request.themeColors),
         pubspecYaml: pubspecMatch ? pubspecMatch[1].trim() : generateFallbackPubspec(request.name),
         widgetStructure: generateWidgetStructure(request.name)
       };
@@ -127,7 +159,7 @@ Return a JSON object with exactly these fields:
 
     return {
       success: true,
-      code: parsedData.code || generateFallbackCode(request.name, request.description),
+      code: parsedData.code || generateFallbackCode(request.name, request.description, request.themeColors),
       pubspecYaml: parsedData.pubspecYaml || generateFallbackPubspec(request.name),
       widgetStructure: parsedData.widgetStructure || generateWidgetStructure(request.name)
     };
@@ -135,7 +167,7 @@ Return a JSON object with exactly these fields:
     console.error("Gemini API Error:", error);
     return {
       success: false,
-      code: generateFallbackCode(request.name, request.description),
+      code: generateFallbackCode(request.name, request.description, request.themeColors),
       pubspecYaml: generateFallbackPubspec(request.name),
       widgetStructure: generateWidgetStructure(request.name),
       error: error instanceof Error ? error.message : "Unknown error occurred"
@@ -144,8 +176,15 @@ Return a JSON object with exactly these fields:
 }
 
 // Professional FlutterFlow-quality fallback functions
-function generateFallbackCode(pageName: string, description: string): string {
+function generateFallbackCode(pageName: string, description: string, themeColors?: { primary: string; secondary: string; accent: string }): string {
   const className = pageName.replace(/\s+/g, '') + 'Page';
+  
+  // Use default theme colors if not provided
+  const colors = themeColors || {
+    primary: '#5D3FD3',
+    secondary: '#6C63FF', 
+    accent: '#FF6B6B'
+  };
   
   return `import 'package:flutter/material.dart';
 
@@ -163,7 +202,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6750A4),
+          seedColor: Color(int.parse('0xFF' + '${colors.primary}'.substring(1))),
           brightness: Brightness.light,
         ),
         fontFamily: 'Roboto',
@@ -233,13 +272,13 @@ class _${className}State extends State<${className}>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
             ],
           ),
         ),
@@ -273,8 +312,8 @@ class _${className}State extends State<${className}>
                             Container(
                               padding: const EdgeInsets.all(20.0),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                gradient: LinearGradient(
+                                  colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
                                 ),
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
@@ -311,12 +350,12 @@ class _${className}State extends State<${className}>
                                     SnackBar(
                                       content: Text('Welcome to ${pageName}!'),
                                       behavior: SnackBarBehavior.floating,
-                                      backgroundColor: const Color(0xFF667EEA),
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
                                     ),
                                   );
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF667EEA),
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 32.0,

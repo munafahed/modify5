@@ -38,9 +38,33 @@ import {
 import type { Project, ProjectPage } from "@/types";
 
 // Helper functions for Flutter code generation
-function generateSampleFlutterCode(name: string, description: string): string {
+function generateSampleFlutterCode(name: string, description: string, themeColors?: { primary: string; secondary: string; accent: string }): string {
   const className = name.replace(/\s+/g, '') + 'Screen';
   return `import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '${name}',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(int.parse('0xFF' + '${themeColors?.primary.substring(1) || '5D3FD3'}')),
+          brightness: Brightness.light,
+        ),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: ${className}(),
+    );
+  }
+}
 
 class ${className} extends StatefulWidget {
   const ${className}({super.key});
@@ -182,7 +206,8 @@ export function PageBuilder({ project, page, onSave, onCancel }: PageBuilderProp
           description: values.description,
           projectContext: `${project.name}: ${project.description}`,
           existingPages: project.pages.map(p => ({ name: p.name, description: p.description })),
-          generateForScreensFolder: true // Generate code specifically for /lib/screens/ structure
+          generateForScreensFolder: true, // Generate code specifically for /lib/screens/ structure
+          themeColors: project.colors // Pass the project's theme colors
         }),
       });
 
@@ -224,7 +249,7 @@ export function PageBuilder({ project, page, onSave, onCancel }: PageBuilderProp
         name: values.name,
         description: values.description,
         createdAt: page?.createdAt || new Date(),
-        code: generateSampleFlutterCode(values.name, values.description),
+        code: generateSampleFlutterCode(values.name, values.description, project.colors),
         pubspecYaml: generateFallbackPubspec(values.name),
         widgetStructure: generateWidgetStructure(values.name),
         previewUrl: `https://flutter-preview.example.com/${project.id}/${values.name.toLowerCase()}`,

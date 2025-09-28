@@ -599,36 +599,330 @@ const ProfileScreen = ({ appConfig, onNavigate }: PreviewScreenProps) => (
   </div>
 );
 
-// Add more screen components for Settings, Search, Chat, etc.
-const GenericScreen = ({ screenName, description, appConfig, onNavigate }: PreviewScreenProps & { screenName: string; description?: string }) => (
-  <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-      <Button variant="ghost" size="sm" onClick={() => onNavigate('Home')}>
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
-      <h1 className="text-xl font-semibold">{screenName}</h1>
-      <div className="w-8" />
-    </div>
-    
-    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-      <div 
-        className="w-16 h-16 rounded-full mb-4 flex items-center justify-center"
-        style={{ backgroundColor: appConfig.colors.accent + '20' }}
-      >
-        <Zap className="h-8 w-8" style={{ color: appConfig.colors.accent }} />
+// Enhanced Custom Page Component that renders specific content based on page type
+const CustomPageComponent = ({ screenName, description, appConfig, onNavigate, currentTheme }: PreviewScreenProps & { screenName: string; description?: string }) => {
+  const pageType = screenName.toLowerCase();
+  const descriptionLower = description?.toLowerCase() || '';
+  
+  // Determine page type from name or description
+  const isContactPage = pageType.includes('contact') || descriptionLower.includes('contact') || descriptionLower.includes('form');
+  const isAboutPage = pageType.includes('about') || descriptionLower.includes('about') || descriptionLower.includes('info');
+  const isSettingsPage = pageType.includes('setting') || descriptionLower.includes('setting') || descriptionLower.includes('preference');
+  const isProfilePage = pageType.includes('profile') || descriptionLower.includes('profile') || descriptionLower.includes('user');
+  const isHelpPage = pageType.includes('help') || pageType.includes('faq') || descriptionLower.includes('help') || descriptionLower.includes('faq');
+  
+  // Dynamic colors based on theme
+  const bgColor = currentTheme === 'dark' ? 'bg-gray-900' : 'bg-white';
+  const textColor = currentTheme === 'dark' ? 'text-white' : 'text-gray-900';
+  const subtextColor = currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600';
+  const borderColor = currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-200';
+  const inputBgColor = currentTheme === 'dark' ? 'bg-gray-800' : 'bg-gray-100';
+  
+  // Contact Us Page
+  if (isContactPage) {
+    return (
+      <div className={`h-full flex flex-col ${bgColor}`} role="main" aria-label={`${screenName} page`}>
+        <div className={`flex items-center justify-between p-4 border-b ${borderColor}`}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onNavigate('Home')}
+            aria-label="Go back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className={`text-xl font-semibold ${textColor}`}>{screenName}</h1>
+          <div className="w-8" />
+        </div>
+        
+        <div className="flex-1 p-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+          >
+            <div className="text-center mb-6">
+              <div 
+                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                style={{ backgroundColor: appConfig.colors.primary + '20' }}
+                aria-hidden="true"
+              >
+                <MessageCircle className="h-8 w-8" style={{ color: appConfig.colors.primary }} />
+              </div>
+              <h2 className={`text-2xl font-bold mb-2 ${textColor}`}>Get in Touch</h2>
+              <p className={subtextColor}>We'd love to hear from you</p>
+            </div>
+            
+            <form className="space-y-4" aria-label="Contact form">
+              <div className="grid grid-cols-1 gap-4">
+                <div className={`p-4 border rounded-lg ${borderColor}`}>
+                  <label className={`block text-sm font-medium mb-2 ${textColor}`} htmlFor="contact-name">
+                    Name *
+                  </label>
+                  <div 
+                    className={`w-full h-10 ${inputBgColor} rounded-md border-2 border-transparent focus-within:border-2`}
+                    style={{ borderColor: 'transparent' }}
+                    id="contact-name"
+                    role="textbox"
+                    aria-required="true"
+                    tabIndex={0}
+                  />
+                </div>
+                <div className={`p-4 border rounded-lg ${borderColor}`}>
+                  <label className={`block text-sm font-medium mb-2 ${textColor}`} htmlFor="contact-email">
+                    Email *
+                  </label>
+                  <div 
+                    className={`w-full h-10 ${inputBgColor} rounded-md border-2 border-transparent focus-within:border-2`}
+                    style={{ borderColor: 'transparent' }}
+                    id="contact-email"
+                    role="textbox"
+                    aria-required="true"
+                    tabIndex={0}
+                  />
+                </div>
+                <div className={`p-4 border rounded-lg ${borderColor}`}>
+                  <label className={`block text-sm font-medium mb-2 ${textColor}`} htmlFor="contact-message">
+                    Message *
+                  </label>
+                  <div 
+                    className={`w-full h-20 ${inputBgColor} rounded-md border-2 border-transparent focus-within:border-2`}
+                    style={{ borderColor: 'transparent' }}
+                    id="contact-message"
+                    role="textbox"
+                    aria-required="true"
+                    tabIndex={0}
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full"
+                style={{ backgroundColor: appConfig.colors.primary, color: 'white' }}
+                aria-label="Submit contact form"
+                tabIndex={0}
+              >
+                Send Message
+              </Button>
+            </form>
+          </motion.div>
+        </div>
       </div>
-      <h2 className="text-xl font-bold mb-2">{screenName} Page</h2>
-      <p className="text-gray-600 dark:text-gray-300 mb-4">
-        {description || `This is the ${screenName.toLowerCase()} screen of your app.`}
-      </p>
-      {!description && (
-        <p className="text-sm text-gray-500">
-          Content will be customized based on your requirements.
-        </p>
-      )}
+    );
+  }
+  
+  // About Page
+  if (isAboutPage) {
+    return (
+      <div className={`h-full flex flex-col ${bgColor}`} role="main" aria-label={`${screenName} page`}>
+        <div className={`flex items-center justify-between p-4 border-b ${borderColor}`}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onNavigate('Home')}
+            aria-label="Go back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className={`text-xl font-semibold ${textColor}`}>{screenName}</h1>
+          <div className="w-8" />
+        </div>
+        
+        <div className="flex-1 p-6 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <div 
+              className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
+              style={{ backgroundColor: appConfig.colors.primary + '20' }}
+              aria-hidden="true"
+            >
+              <Info className="h-10 w-10" style={{ color: appConfig.colors.primary }} />
+            </div>
+            <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>About {appConfig.appName}</h2>
+            <p className={`${subtextColor} mb-6`}>
+              {description || appConfig.description || "A beautiful app built with modern technology."}
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 mt-6" role="region" aria-label="App statistics">
+              <div className={`p-4 border rounded-lg ${borderColor} text-center`} tabIndex={0}>
+                <Star className="h-6 w-6 mx-auto mb-2" style={{ color: appConfig.colors.accent }} aria-hidden="true" />
+                <div className={`text-lg font-semibold ${textColor}`}>4.8</div>
+                <div className={`text-sm ${subtextColor}`}>Rating</div>
+              </div>
+              <div className={`p-4 border rounded-lg ${borderColor} text-center`} tabIndex={0}>
+                <Heart className="h-6 w-6 mx-auto mb-2" style={{ color: appConfig.colors.accent }} aria-hidden="true" />
+                <div className={`text-lg font-semibold ${textColor}`}>10K+</div>
+                <div className={`text-sm ${subtextColor}`}>Users</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Settings Page
+  if (isSettingsPage) {
+    return (
+      <div className={`h-full flex flex-col ${bgColor}`} role="main" aria-label={`${screenName} page`}>
+        <div className={`flex items-center justify-between p-4 border-b ${borderColor}`}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onNavigate('Home')}
+            aria-label="Go back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className={`text-xl font-semibold ${textColor}`}>{screenName}</h1>
+          <div className="w-8" />
+        </div>
+        
+        <div className="flex-1 p-6 space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-4"
+            role="list"
+            aria-label="Settings options"
+          >
+            {[
+              { icon: Bell, label: 'Notifications', desc: 'Manage your notifications' },
+              { icon: Shield, label: 'Privacy', desc: 'Privacy and security settings' },
+              { icon: Palette, label: 'Appearance', desc: 'Customize app appearance' },
+              { icon: User, label: 'Account', desc: 'Manage your account' }
+            ].map((item, index) => (
+              <div 
+                key={index}
+                className={`flex items-center justify-between p-4 border rounded-lg ${borderColor} hover:bg-opacity-50 transition-colors`}
+                style={{ backgroundColor: appConfig.colors.primary + '05' }}
+                role="listitem"
+                tabIndex={0}
+                aria-label={`${item.label}: ${item.desc}`}
+              >
+                <div className="flex items-center space-x-3">
+                  <item.icon className="h-5 w-5" style={{ color: appConfig.colors.primary }} aria-hidden="true" />
+                  <div>
+                    <div className={`font-medium ${textColor}`}>{item.label}</div>
+                    <div className={`text-sm ${subtextColor}`}>{item.desc}</div>
+                  </div>
+                </div>
+                <ChevronRight className={`h-4 w-4 ${subtextColor}`} aria-hidden="true" />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Enhanced generic fallback for other page types - provides rich content based on description
+  const getPageIcon = () => {
+    if (isProfilePage) return User;
+    if (isHelpPage) return Info;
+    if (descriptionLower.includes('shop') || descriptionLower.includes('store')) return Rocket;
+    if (descriptionLower.includes('search')) return Search;
+    if (descriptionLower.includes('chat') || descriptionLower.includes('message')) return MessageCircle;
+    return Zap;
+  };
+
+  const getPageContent = () => {
+    if (isProfilePage) return {
+      title: 'User Profile',
+      content: 'Manage your profile information and preferences',
+      features: ['Edit Profile', 'Change Password', 'Privacy Settings', 'Account Details']
+    };
+    if (isHelpPage) return {
+      title: 'Help & Support',
+      content: 'Find answers to frequently asked questions',
+      features: ['FAQs', 'Contact Support', 'User Guide', 'Troubleshooting']
+    };
+    if (descriptionLower.includes('shop') || descriptionLower.includes('store')) return {
+      title: 'Shop',
+      content: 'Browse and purchase items',
+      features: ['Featured Products', 'Categories', 'Cart', 'Wishlist']
+    };
+    return {
+      title: screenName,
+      content: description || `Welcome to the ${screenName.toLowerCase()} section of your app.`,
+      features: ['Feature 1', 'Feature 2', 'Feature 3', 'More Options']
+    };
+  };
+
+  const PageIcon = getPageIcon();
+  const pageContent = getPageContent();
+
+  return (
+    <div className={`h-full flex flex-col ${bgColor}`} role="main" aria-label={`${screenName} page`}>
+      <div className={`flex items-center justify-between p-4 border-b ${borderColor}`}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => onNavigate('Home')}
+          aria-label="Go back to home"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className={`text-xl font-semibold ${textColor}`}>{screenName}</h1>
+        <div className="w-8" />
+      </div>
+      
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md mx-auto"
+        >
+          <div 
+            className="w-16 h-16 rounded-full mb-4 flex items-center justify-center mx-auto"
+            style={{ backgroundColor: appConfig.colors.accent + '20' }}
+            aria-hidden="true"
+          >
+            <PageIcon className="h-8 w-8" style={{ color: appConfig.colors.accent }} />
+          </div>
+          <h2 className={`text-xl font-bold mb-2 ${textColor}`}>{pageContent.title}</h2>
+          <p className={`${subtextColor} mb-6`}>
+            {pageContent.content}
+          </p>
+          
+          {/* Feature list */}
+          <div className="space-y-3 mb-6" role="list" aria-label="Page features">
+            {pageContent.features.map((feature, index) => (
+              <div 
+                key={index}
+                className={`flex items-center p-3 border rounded-lg ${borderColor} text-left`}
+                style={{ backgroundColor: appConfig.colors.primary + '05' }}
+                role="listitem"
+                tabIndex={0}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-3" style={{ color: appConfig.colors.primary }} aria-hidden="true" />
+                <span className={textColor}>{feature}</span>
+              </div>
+            ))}
+          </div>
+          
+          <Button 
+            style={{ backgroundColor: appConfig.colors.primary, color: 'white' }}
+            onClick={() => onNavigate('Home')}
+            aria-label="Return to home page"
+          >
+            Back to Home
+          </Button>
+        </motion.div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+// Keep the old GenericScreen as an alias
+const GenericScreen = CustomPageComponent;
 
 interface FlutterPreviewFrameProps {
   appConfig: AppConfig;
